@@ -91,12 +91,11 @@ def visualize_graph(topic_tuple):
         pkl.dump(graph.partition, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
     #Record metrics
-    """
     graph.record_metric('separability', 'separability')
     graph.record_metric('density', 'density')
     graph.record_user_degree()
     with open(os.path.join(path, 'com_fluid_metrics.pkl'), 'wb') as handle:
-        pkl.dump(graph.metric_record, handle, protocol=pkl.HIGHEST_PROTOCOL)"""
+        pkl.dump(graph.metric_record, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 def fill_with_posts(topic_tuple):
     fetch_posts_from_db(topic_tuple[1], 'REDDIT')
@@ -162,28 +161,6 @@ def annotate_socio_demographics(topic_tuple):
     ideo_annotator.annotate()
     ideo_annotator.save_frame(res_path)
 
-
-def bot_detection(topic_tuple):
-    d_frame = pd.read_pickle(topic_tuple[1], compression='infer')
-    path = os.path.join(SOURCE_PATH, topic_tuple[0][0])
-    degrees = pkl.load(open(os.path.join(path, 'com_fluid_metrics.pkl'), 'rb'))['node_degree']
-
-    print(np.average(list(degrees.values())))
-
-    for index, row in d_frame.iterrows():
-        if not index in degrees.keys() or index in exclude:
-            continue
-        if degrees[index] > 0 and degrees[index] < 30:
-            for doc in row['posts']:
-                if 'm a bot' in doc[2].lower() or \
-                    'automod' in doc[2].lower() or \
-                    'automatically generated' in doc[2].lower() or \
-                    'generated automatically' in doc[2].lower() or \
-                    'automatically removed' in doc[2].lower() or \
-                    'removed automatically' in doc[2].lower():
-                    print('----------------')
-                    print(doc)
-
 def calc_results(topic_tuple):
     #print('\\textbf{' + str(topic_tuple[0][0]) + '}')
     frame_path = topic_tuple[1].replace('.pkl', '_annotated.pkl')
@@ -248,18 +225,6 @@ def recalc_metrics(topic_tuple):
     print(graph.metric_record)
     with open(os.path.join(path, 'com_fluid_metrics_exp.pkl'), 'wb') as handle:
         pkl.dump(graph.metric_record, handle, protocol=pkl.HIGHEST_PROTOCOL)
-
-
-def gen_regression_stance_dataset(topic_tuple):
-    frame_path = topic_tuple[1].replace('.pkl', '_annotated.pkl')
-    d_frame = pd.read_pickle(frame_path, compression='infer')
-    ids_to_keep = set()
-    for index, row in d_frame.iterrows():
-        if not row['gt_stance'] == 'NOT_DEFINED':
-            ids_to_keep.add(index)
-    if not len(ids_to_keep) == 0:
-        filtered_frame = d_frame[d_frame.index.isin(ids_to_keep)]
-        filtered_frame.to_pickle(os.path.join('stance_regression_frames/' + topic_tuple[0][0] + '.pkl'))
 
 def data_stats(tuple):
     print('----------')
