@@ -23,8 +23,6 @@ def load_annotated_users():
         for row in lines:
             annotated_user_map.append((row[0], row[1]))
 
-load_annotated_users()
-
 PLATFORM = 'REDDIT'
 
 SOURCE_PATH = 'echo_chambers/'
@@ -163,7 +161,7 @@ def annotate_socio_demographics(topic_tuple):
 
 def calc_results(topic_tuple):
     #print('\\textbf{' + str(topic_tuple[0][0]) + '}')
-    frame_path = topic_tuple[1].replace('.pkl', '_annotated.pkl')
+    frame_path = topic_tuple[1].replace('.pkl', '_annotated_anonymized.pkl')
     path = os.path.join(SOURCE_PATH, topic_tuple[0][0])
     d_frame = pd.read_pickle(frame_path, compression='infer')
     res_writer = TopicResultWriter(d_frame, topic_tuple[0][0])
@@ -244,7 +242,7 @@ def data_stats(tuple):
     return post_num_u
 
 def annotate_regex(topic_tuple):
-    res_path = topic_tuple[1].replace('.pkl', '_annotated.pkl')
+    res_path = topic_tuple[1].replace('.pkl', '_annotated_anonymized.pkl')
     print(res_path)
     gender_annotator = RegexGenderAnnotator(res_path, 'regex_gender')
     gender_annotator.annotate()
@@ -259,7 +257,7 @@ def generate_cell_color(num):
         print('\\definecolor{color' + str(num) + str(index) + '}{RGB}{' + str(int(rgb_val[0])) + ',' + str(int(rgb_val[1])) +',' + str(int(rgb_val[2])) + '}')
 
 def get_socio_correlation_values(topic_tuple, metric, socio_dim):
-    frame_path = topic_tuple[1].replace('.pkl', '_annotated.pkl')
+    frame_path = topic_tuple[1].replace('.pkl', '_annotated_anonymized.pkl')
     path = os.path.join(SOURCE_PATH, topic_tuple[0][0])
     d_frame = pd.read_pickle(frame_path, compression='infer')
     res_writer = TopicResultWriter(d_frame, topic_tuple[0][0])
@@ -270,7 +268,7 @@ def get_socio_correlation_values(topic_tuple, metric, socio_dim):
 
     res_writer.group_users_by_partition(partition)
     x_vals = []
-    print('Collecting x...')
+    #print('Collecting x...')
     if metric == 'expansion':
         with open(os.path.join(path, 'com_fluid_metrics_exp.pkl'), 'rb') as handle:
             metrics_exp = pkl.load(handle)
@@ -281,13 +279,13 @@ def get_socio_correlation_values(topic_tuple, metric, socio_dim):
             metrics = pkl.load(handle)
         for com in sorted(metrics['separability']):
             x_vals.append(metrics['separability'][com])
-    print('Collecting y...')
+    #print('Collecting y...')
     res_writer.add_socio_column(socio_dim, socio_dim)
     y_vals = res_writer.get_socio_correlation_values(socio_dim)
     return x_vals, y_vals
 
 def get_stance_correlation_values(topic_tuple, metric, stance_key, std_mode=False):
-    frame_path = topic_tuple[1].replace('.pkl', '_annotated.pkl')
+    frame_path = topic_tuple[1].replace('.pkl', '_annotated_anonymized.pkl')
     path = os.path.join(SOURCE_PATH, topic_tuple[0][0])
     d_frame = pd.read_pickle(frame_path, compression='infer')
     res_writer = TopicResultWriter(d_frame, topic_tuple[0][0])
@@ -298,24 +296,24 @@ def get_stance_correlation_values(topic_tuple, metric, stance_key, std_mode=Fals
 
     res_writer.group_users_by_partition(partition)
     x_vals_prelim = []
-    print('Collecting x...')
+    #print('Collecting x...')
     with open(os.path.join(path, 'com_fluid_metrics.pkl'), 'rb') as handle:
         metrics = pkl.load(handle)
     if metric == 'expansion':
         with open(os.path.join(path, 'com_fluid_metrics_exp.pkl'), 'rb') as handle:
             metrics_exp = pkl.load(handle)
         for com in sorted(metrics_exp['expansion']):
-            print(com)
+            #print(com)
             x_vals_prelim.append(metrics_exp['expansion'][com])
     if metric == 'separability':
         for com in sorted(metrics['separability']):
-            print(com)
+            #print(com)
             x_vals_prelim.append(metrics['separability'][com])
 
-    print('Collecting y...')
+    #print('Collecting y...')
     res_writer.add_stance_column('gt_stance', 'gt_stance')
     res_writer.add_stance_column('gt_stance', 'stance_weighted', weight_map=metrics['node_degree'])
-    print(x_vals_prelim)
+    #print(x_vals_prelim)
     x_vals = []
     y_vals = []
 
@@ -329,8 +327,8 @@ def get_stance_correlation_values(topic_tuple, metric, stance_key, std_mode=Fals
     stance_mean = np.average(com_stances, weights=com_weights)
 
     for com, stance_tuple in res_writer.column_data[stance_key].items():
-        print(com)
-        print(stance_tuple)
+        #print(com)
+        #print(stance_tuple)
         if stance_tuple[2] > 5:
             x_vals.append(x_vals_prelim[com])
             if not std_mode:
@@ -354,9 +352,9 @@ def measure_socio_correlation(metric, socio_dim):
         x_t , y_t = get_socio_correlation_values(topic, metric, socio_dim)
         x_vals.extend(x_t)
         y_vals.extend(y_t)
-    print(x_vals)
-    print(y_vals)
-    print('Res: ' + str(calc_correlation(x_vals, y_vals)))
+    #print(x_vals)
+    #print(y_vals)
+    print('Res: ' + str(calc_correlation(x_vals, y_vals)[0]))
 
 def measure_stance_correlation(metric, stance_key):
     print('--------------')
@@ -365,17 +363,17 @@ def measure_stance_correlation(metric, stance_key):
     x_vals = []
     y_vals = []
     for topic in TOPICS:
-        x_t, y_t = get_stance_correlation_values(topic, metric, stance_key, std_mode=True)
+        x_t, y_t = get_stance_correlation_values(topic, metric, stance_key, std_mode=False)
         x_vals.extend(x_t)
         y_vals.extend(y_t)
-    print(x_vals)
-    print(y_vals)
-    print('Res: ' + str(calc_correlation(x_vals, y_vals)))
+    #print(x_vals)
+    #print(y_vals)
+    print('Res: ' + str(calc_correlation(x_vals, y_vals)[0]))
 
 def calc_pred_quality(topic_tuple):
     print('--------------')
     print(topic[0])
-    frame_path = topic_tuple[1].replace('.pkl', '_annotated.pkl')
+    frame_path = topic_tuple[1].replace('.pkl', '_annotated_anonymized.pkl')
     path = os.path.join(SOURCE_PATH, topic_tuple[0][0])
     d_frame = pd.read_pickle(frame_path, compression='infer')
     res_writer = TopicResultWriter(d_frame, topic_tuple[0][0])
@@ -388,10 +386,12 @@ def calc_pred_quality(topic_tuple):
     print(res_writer.column_data)
     print(res_writer.baselines)
 
-for topic in TOPICS:
-    calc_pred_quality(topic)
-
+print('CORRELATION RESULTS:')
 measure_socio_correlation('separability', 'predicted_gender')
 measure_socio_correlation('separability', 'predicted_age')
 measure_socio_correlation('separability', 'predicted_ideology')
 measure_stance_correlation('separability', 'stance_weighted')
+measure_socio_correlation('expansion', 'predicted_gender')
+measure_socio_correlation('expansion', 'predicted_age')
+measure_socio_correlation('expansion', 'predicted_ideology')
+measure_stance_correlation('expansion', 'stance_weighted')

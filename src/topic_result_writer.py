@@ -32,7 +32,6 @@ class TopicResultWriter(object):
     def get_socio_correlation_values(self, key):
         rmse_vec = []
         for com in sorted(self.column_data[key]):
-            print(com)
             com_errors = []
             for dim, percentage in self.column_data[key][com].items():
                 com_errors.append(percentage-self.baselines[key][dim])
@@ -124,7 +123,7 @@ class TopicResultWriter(object):
             else:
                 baseline_collector[socio_label] += 1
         res = {}
-        #TODO: Fix missing entries
+
         for com, socios in collector.items():
             total = sum(socios.values())
             res[com] = {}
@@ -136,7 +135,6 @@ class TopicResultWriter(object):
 
         self.column_data[column_name] = res
         baseline_res = {}
-        print(sum(baseline_collector.values()))
         for index, summed in baseline_collector.items():
             baseline_res[index] = summed/sum(baseline_collector.values())
         self.baselines[column_name] = baseline_res
